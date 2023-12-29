@@ -37,7 +37,7 @@ def create_mip_from_3d(img, record_directory: str, patient_reference: str, nb_im
             else:
                 borne_max = 15000
         plt.imshow(mip, cmap='Greys', vmax=borne_max)
-        fig.savefig(record_directory + '/MIP_' + patient_reference + '%03d' % (i) + '.png', dpi=1)
+        fig.savefig(record_directory + '/MIP_' + patient_reference + '%04d' % (i) + '.png', dpi=1)
         plt.close(fig)
 
 
@@ -67,7 +67,7 @@ def generate_from_path(patient_folder_name: str, file_folder_name: str, mask=Fal
     if not pet_files:
         print('The' + file_folder_name + ' folder provided does not contain any file', file=sys.stderr)
 
-    mip_directory = patient_folder_name + '/Test' + '/' + file_folder_name
+    mip_directory = patient_folder_name + '/MIP' + '/' + file_folder_name
     if not os.path.exists(os.path.join(os.getcwd(), mip_directory)):
         os.mkdir(mip_directory + '/')
 
