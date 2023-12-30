@@ -9,7 +9,7 @@ from scipy import ndimage
 import nibabel
 
 
-def create_mip_from_3d(img, record_directory: str, patient_reference: str, nb_image=40, img_size=(512, 512),
+def create_mip_from_3d(img, record_directory: str, patient_reference: str, nb_image=40, img_size=(5.12, 5.12),
                        is_mask=False,
                        borne_max=None):
     ls_mip = []
@@ -29,7 +29,7 @@ def create_mip_from_3d(img, record_directory: str, patient_reference: str, nb_im
     for mip, i in zip(ls_mip, range(len(ls_mip))):
         fig, ax = plt.subplots()
         plt.rcParams["figure.figsize"] = img_size
-        plt.rcParams["figure.dpi"] = 1
+        plt.rcParams["figure.dpi"] = 100
         ax.set_axis_off()
         if borne_max is None:
             if is_mask:
@@ -37,42 +37,44 @@ def create_mip_from_3d(img, record_directory: str, patient_reference: str, nb_im
             else:
                 borne_max = 15000
         plt.imshow(mip, cmap='Greys', vmax=borne_max)
-        fig.savefig(record_directory + '/MIP_' + patient_reference + '%04d' % (i) + '.png', dpi=1)
+        fig.savefig(record_directory + '/MIP_' + patient_reference + '%04d' % (i) + '.png', dpi=100)
         plt.close(fig)
 
 
-def create_mip_from_path(patient_folder_name: str, pet_folder_name: str, mask_folder_name: str, pet_borne_max=None,
+def create_mip_from_path(pet_folder_name: str, mask_folder_name: str, pet_borne_max=None,
                          mask_borne_max=None,
-                         img_size=(512, 512), nb_image=1):
-    if not os.path.exists(os.path.join(os.getcwd(), patient_folder_name)):
-        print('Patient folder provided does not exist', file=sys.stderr)
-    if not os.path.exists(os.path.join(os.getcwd(), patient_folder_name, 'MIP')):
-        os.mkdir(os.path.join(os.getcwd(), patient_folder_name, 'MIP'))
+                         img_size=(5.12, 5.12), nb_image=1):
+    record_folder = 'MIP'
+    if not os.path.exists(os.path.join(os.getcwd(), record_folder)):
+        os.mkdir(os.path.join(os.getcwd(), record_folder))
     if pet_folder_name is not None:
-        generate_from_path(patient_folder_name, pet_folder_name, mask=False, borne_max=pet_borne_max, img_size=img_size,
+        generate_from_path(pet_folder_name, record_folder=record_folder, mask=False, borne_max=pet_borne_max,
+                           img_size=img_size,
                            nb_image=nb_image)
     if mask_folder_name is not None:
-        generate_from_path(patient_folder_name, mask_folder_name, mask=True, borne_max=mask_borne_max, img_size=img_size,
+        generate_from_path(mask_folder_name, record_folder=record_folder, mask=True, borne_max=mask_borne_max,
+                           img_size=img_size,
                            nb_image=nb_image)
     print("MIP images generated !")
 
 
-def generate_from_path(patient_folder_name: str, file_folder_name: str, mask=False, borne_max=None, img_size=(512, 512),
+def generate_from_path(file_folder_name: str, record_folder: str, mask=False, borne_max=None, img_size=(5.12, 5.12),
                        nb_image=1):
-    files_path = os.path.join(os.getcwd(), patient_folder_name, file_folder_name)
-    if not os.path.exists(files_path):
+    if not os.path.exists(file_folder_name):
         print('The' + file_folder_name + ' folder provided does not exist', file=sys.stderr)
 
-    pet_files = [pet for pet in os.listdir(files_path) if os.path.isfile(os.path.join(files_path, pet))]
+    pet_files = [pet for pet in os.listdir(file_folder_name) if os.path.isfile(os.path.join(file_folder_name, pet))]
     if not pet_files:
         print('The' + file_folder_name + ' folder provided does not contain any file', file=sys.stderr)
-
-    mip_directory = patient_folder_name + '/MIP' + '/' + file_folder_name
+    if mask:
+        mip_directory = os.getcwd() + '/' + record_folder + '/Mask'
+    else:
+        mip_directory = os.getcwd() + '/' + record_folder + '/PET'
     if not os.path.exists(os.path.join(os.getcwd(), mip_directory)):
         os.mkdir(mip_directory + '/')
 
     for pet in pet_files:
-        file = os.path.join(files_path, pet)
+        file = os.path.join(file_folder_name, pet)
         if pet.endswith('.nii'):
             img = nibabel.load(file)
             patient_name = pet.split(".")[0]
