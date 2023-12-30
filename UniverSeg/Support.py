@@ -3,17 +3,20 @@ import sys
 import numpy as np
 from random import shuffle
 import skimage.io as io
+from skimage.util import invert
 import torch
 from DivideAndRebuild import divide
 
 
 class Support:
 
-    def __init__(self, map_path: str, label_path: str, support_size: int, batch_size: int):
-        self.maps, self.labels = Support.generate_support_from_path(map_path, label_path, support_size, batch_size)
+    def __init__(self, map_path: str, label_path: str, support_size: int, batch_size: int, invert_label: bool = True):
+        self.maps, self.labels = Support.generate_support_from_path(map_path, label_path, support_size, batch_size,
+                                                                    invert_label)
 
     @staticmethod
-    def generate_support_from_path(map_folder_path: str, label_folder_path: str, support_size: int, batch_size: int):
+    def generate_support_from_path(map_folder_path: str, label_folder_path: str, support_size: int, batch_size: int,
+                                   invert_label: bool = True):
         filenames = os.listdir(map_folder_path)
         shuffle(filenames)
         filenames = filenames[:support_size]
@@ -26,17 +29,21 @@ class Support:
                       file=sys.stderr)
                 continue
             map_img = io.imread(os.path.join(map_folder_path, map_file), as_gray=True).astype(float)
-            divided_map_img, non_void_idx = divide(map_img)
-            maps += divided_map_img
             label_img = io.imread(label_file, as_gray=True).astype(float)
             if map_img.shape != label_img.shape:
-                print("\n The label and the map images don't have the same size \n", file=sys.stderr)
+                print("\n The label and the map images for the image " + map_file + " don't have the same size \n",
+                      file=sys.stderr)
                 continue
-            labels += divide(label_img, non_void_idx)
+            divided_label_img, non_void_idx = divide(label_img)
+            # In our support, the mask was black whereas the mask for UniverSeg is a white area
+            if invert_label:
+                divided_label_img = [invert(sub_im) for sub_im in divided_label_img]
+            labels += divided_label_img
+            maps += divide(map_img, non_void_idx)
         maps = np.array(maps)
         labels = np.array(labels)
         nb_sub_support = maps.shape[0] if maps.shape[0] == labels.shape[0] else None
-        if nb_sub_support == 0:
+        if nb_sub_support == 0 or nb_sub_support is None:
             print(
                 "\n No support has been generated.\n Check if the name of the labels correspond to the name of the maps \n",
                 file=sys.stderr)
