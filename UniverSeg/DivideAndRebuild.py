@@ -1,3 +1,4 @@
+# @author Arthur Astier
 from skimage import exposure
 from typing import List, Tuple
 import numpy as np

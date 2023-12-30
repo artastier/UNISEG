@@ -1,3 +1,4 @@
+# @author Arthur Astier
 from Segmenter import Segmenter
 import skimage.io as io
 from skimage import color

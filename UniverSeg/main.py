@@ -1,3 +1,4 @@
+# @author Arthur Astier
 from PyQt5.QtWidgets import QApplication
 from PathSelection import PathSelection
 import os

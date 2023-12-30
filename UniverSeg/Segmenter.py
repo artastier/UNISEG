@@ -1,3 +1,4 @@
+# @author Arthur Astier
 import os
 import sys
 import skimage.io as io

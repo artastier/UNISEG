@@ -1,3 +1,4 @@
+# @author Arthur Astier
 import os
 from Support import Support
 from Segmenter import Segmenter
