@@ -41,10 +41,9 @@ def create_mip_from_3d(img, record_directory: str, patient_reference: str, nb_im
         plt.close(fig)
 
 
-def create_mip_from_path(pet_folder_name: str, mask_folder_name: str, pet_borne_max=None,
+def create_mip_from_path(pet_folder_name: str, mask_folder_name: str, record_folder: str, pet_borne_max=None,
                          mask_borne_max=None,
                          img_size=(5.12, 5.12), nb_image=1):
-    record_folder = 'MIP'
     if not os.path.exists(os.path.join(os.getcwd(), record_folder)):
         os.mkdir(os.path.join(os.getcwd(), record_folder))
     if pet_folder_name is not None:
