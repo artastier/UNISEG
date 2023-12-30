@@ -13,7 +13,6 @@ from universeg import universeg
 class Segmenter:
     def __init__(self, test_folder_path: str, support: Support):
         self.segmented_images, self.filenames = Segmenter.segment_from_path(test_folder_path, support)
-        self.test_folder_path = test_folder_path
 
     @staticmethod
     def segment_from_path(test_folder_path: str, support: Support):
@@ -37,6 +36,8 @@ class Segmenter:
         segmented_sub_img = []
         batch_size = support.maps.shape[0]
         model = universeg(pretrained=True)
+        # We have tried to parallelize by duplicating the support and put each sub-image in a batch
+        # But it led to SIGKILL because of too much memory requirements.
         for sub_image in divided_img:
             target_image = torch.zeros((batch_size, 1, 128, 128))
             target_image[0, 0] = torch.from_numpy(sub_image)

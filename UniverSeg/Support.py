@@ -1,7 +1,7 @@
 import os
 import sys
 import numpy as np
-from random import shuffle
+from typing import List
 import skimage.io as io
 from skimage.util import invert
 import torch
@@ -10,19 +10,16 @@ from DivideAndRebuild import divide
 
 class Support:
 
-    def __init__(self, map_path: str, label_path: str, support_size: int, batch_size: int, invert_label: bool = True):
-        self.maps, self.labels = Support.generate_support_from_path(map_path, label_path, support_size, batch_size,
+    def __init__(self, map_path: str, label_path: str, support_files: List[str], invert_label: bool = True):
+        self.maps, self.labels = Support.generate_support_from_path(map_path, label_path, support_files,
                                                                     invert_label)
 
     @staticmethod
-    def generate_support_from_path(map_folder_path: str, label_folder_path: str, support_size: int, batch_size: int,
+    def generate_support_from_path(map_folder_path: str, label_folder_path: str, support_files: List[str],
                                    invert_label: bool = True):
-        filenames = os.listdir(map_folder_path)
-        shuffle(filenames)
-        filenames = filenames[:support_size]
         labels = []
         maps = []
-        for map_file in filenames:
+        for map_file in support_files:
             label_file = os.path.join(label_folder_path, map_file)
             if not os.path.isfile(label_file):
                 print("\n We can't find the label image corresponding to the map image: " + map_file + "\n",
@@ -48,8 +45,8 @@ class Support:
                 "\n No support has been generated.\n Check if the name of the labels correspond to the name of the maps \n",
                 file=sys.stderr)
             return None
-        torch_maps = torch.zeros((batch_size, nb_sub_support, 1, 128, 128))
-        torch_labels = torch.zeros((batch_size, nb_sub_support, 1, 128, 128))
+        torch_maps = torch.zeros((1, nb_sub_support, 1, 128, 128))
+        torch_labels = torch.zeros((1, nb_sub_support, 1, 128, 128))
         torch_maps[0, :, 0, :, :] = torch.from_numpy(maps)
         torch_labels[0, :, 0, :, :] = torch.from_numpy(labels)
         return torch_maps, torch_labels

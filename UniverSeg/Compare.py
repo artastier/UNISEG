@@ -6,11 +6,12 @@ import os
 import sys
 
 
-def compare(ground_truth_path: str, segmenter: Segmenter):
+def compare(ground_truth_path: str, test_folder_path: str, segmenter: Segmenter):
     enhanced_images = []
+
     for idx, filename in enumerate(segmenter.filenames):
         gt_mask_file = os.path.join(ground_truth_path, filename)
-        test_mask_file = os.path.join(segmenter.test_folder_path, filename)
+        test_mask_file = os.path.join(test_folder_path, filename)
         if not os.path.isfile(gt_mask_file) or not os.path.isfile(test_mask_file):
             print("\n We can neither find the ground truth mask nor the test image \n", file=sys.stderr)
             continue
