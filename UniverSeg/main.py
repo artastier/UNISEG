@@ -21,10 +21,13 @@ if __name__ == "__main__":
     if not os.path.exists(os.path.join(os.getcwd(), 'Results')):
         os.mkdir(os.path.join(os.getcwd(), 'Results'))
     for batch in range(batch_size):
-        batch_directory = 'Results/Batch' + str(batch+1)
+        batch_directory = 'Results/Batch' + str(batch + 1)
         if not os.path.exists(os.path.join(os.getcwd(), batch_directory)):
             os.mkdir(os.path.join(os.getcwd(), batch_directory))
         segmented_images = batch_segmenter.segmented_batches[batch]
+        with open(os.path.join(batch_directory, "support_batch_" + str(batch + 1) + "_.txt"), 'w') as file:
+            for element in batch_segmenter.support_batches[batch]:
+                file.write(str(element) + '\n')
         for idx, image in enumerate(segmented_images):
             fig, ax = plt.subplots()
             plt.rcParams["figure.figsize"] = (5.12, 5.12)
@@ -32,6 +35,6 @@ if __name__ == "__main__":
             ax.set_axis_off()
             plt.imshow(image, cmap='gray')
             filename = batch_segmenter.test_filenames[idx]
-            plt.title(f" Batch n°{batch+1} - File: {filename}")
-            fig.savefig(batch_directory+'/Segmented_' + filename, dpi=100)
+            plt.title(f" Batch n°{batch + 1} - File: {filename}")
+            fig.savefig(batch_directory + '/Segmented_' + filename, dpi=100)
             plt.close(fig)
