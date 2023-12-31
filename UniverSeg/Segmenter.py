@@ -28,6 +28,7 @@ class Segmenter:
             segmented_divided_img = Segmenter.apply_universeg(divided_map_img, support)
             segmented_img = exposure.rescale_intensity(rebuild(segmented_divided_img, np.shape(map_img), non_void_idx),
                                                        out_range=(0., 1.))
+            # The segmented image is not a real binary mask
             thresh = threshold_otsu(segmented_img)
             segmented_images.append(segmented_img > thresh)
         return segmented_images, filenames

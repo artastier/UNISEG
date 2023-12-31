@@ -9,8 +9,8 @@ from BatchSegmenter import BatchSegmenter
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     batch_size = 2
-    map_path = "Support/Original"  # PathSelection("Select the Map folder").directory
-    label_path = "Support/Mask"  # PathSelection("Select the Label folder").directory
+    map_path = ["Support/Original_full", "Support/Original_equity"]  # PathSelection("Select the Map folder").directory
+    label_path = ["Support/Mask_full", "Support/Mask_equity"]  # PathSelection("Select the Label folder").directory
     test_path = "Test/Original"  # PathSelection("Select the Test folder").directory
     ground_truth_path = "Test/Mask"  # PathSelection("Select the Ground Truth Masks of the Test images folder").directory
     # For my laptop, I have SIGKILL because the support_size is too big (>22) and generates too much sub-images

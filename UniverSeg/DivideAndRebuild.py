@@ -18,7 +18,7 @@ def divide(img, sector_indices=None):
         for i in range(height):
             for j in range(width):
                 extracted_image = img[i * 128:(i + 1) * 128, j * 128:(j + 1) * 128]
-                if not np.all(extracted_image == 1.0):
+                if not np.all(extracted_image >= 0.95):
                     divided_img.append(extracted_image)
                     non_void.append((i, j))
         return divided_img, non_void
