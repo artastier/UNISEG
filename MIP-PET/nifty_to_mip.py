@@ -37,7 +37,7 @@ def downscale_images(images, downscale_size: tuple):
     return downscaled_images
 
 
-def create_mip_from_3d(img, record_directory: str, patient_reference: str, nb_image=40,
+def transform_nifty(img, record_directory: str, patient_reference: str, nb_image=40,
                        is_mask=False,
                        borne_max=None,
                        pet_shapes=None):
@@ -46,22 +46,17 @@ def create_mip_from_3d(img, record_directory: str, patient_reference: str, nb_im
     # We assume the images are square, so shape[0] = shape[1]
     if not math.log2(img_data.shape[0]).is_integer():
         img_data = pad_images(img_data)
-    if is_mask:
+    if is_mask and img_data.shape[:2] != pet_shapes[patient_reference]:
         img_data = downscale_images(img_data, pet_shapes[patient_reference])
     if pet_shapes is None:
-        img_size = (img_data.shape[0]/100, img_data.shape[0]/100)
+        img_size = (img_data.shape[0] / 100, img_data.shape[0] / 100)
     else:
         img_shape = pet_shapes[patient_reference]
-        img_size = (img_shape[0]/100, img_shape[1]/100)
+        img_size = (img_shape[0] / 100, img_shape[1] / 100)
     create_mip_from_array(img_data, record_directory, patient_reference, img_size,
                           nb_image,
                           is_mask,
                           borne_max)
-    if not is_mask:
-        img_shape = {patient_reference: (img_data.shape[0], img_data.shape[0])}
-        return img_shape
-    else:
-        return {}
 
 
 def create_mip_from_array(img_data, record_directory: str, patient_reference: str, img_size: tuple[float, float],
@@ -96,6 +91,7 @@ def create_mip_from_path(pet_path: str, mask_path: str, record_folder: str, pet_
                          mask_borne_max=None, nb_image=1):
     if not os.path.exists(os.path.join(os.getcwd(), record_folder)):
         os.mkdir(os.path.join(os.getcwd(), record_folder))
+    pet_img_shapes = None
     if pet_path is not None:
         pet_img_shapes = generate_from_path(pet_path, record_folder=record_folder, mask=False, borne_max=pet_borne_max,
                                             nb_image=nb_image)
@@ -119,24 +115,30 @@ def generate_from_path(file_path: str, record_folder: str, mask=False, borne_max
     if not os.path.exists(os.path.join(os.getcwd(), mip_directory)):
         os.mkdir(mip_directory + '/')
 
-    img_shapes = {}
+    if not mask:
+        img_shapes = {}
     for pet in pet_files:
         file = os.path.join(file_path, pet)
         if pet.endswith('.nii'):
             img = nibabel.load(file)
             patient_name = pet.split(".")[0]
-            if pet_shapes is not None:
-                create_mip_from_3d(img, record_directory=mip_directory, patient_reference=patient_name,
-                                   nb_image=nb_image,
-                                   is_mask=mask,
-                                   borne_max=borne_max, pet_shapes=pet_shapes)
+            img_data = img.get_fdata()
+            img_data += 1e-5
+            # We assume the images are square, so shape[0] = shape[1]
+            if not math.log2(img_data.shape[0]).is_integer():
+                img_data = pad_images(img_data)
+            if mask and img_data.shape[:2] != pet_shapes[patient_name]:
+                img_data = downscale_images(img_data, pet_shapes[patient_name])
+            if pet_shapes is None:
+                img_size = (img_data.shape[0] / 100, img_data.shape[0] / 100)
             else:
-                img_shape = create_mip_from_3d(img, record_directory=mip_directory, patient_reference=patient_name,
-                                               nb_image=nb_image,
-                                               is_mask=mask,
-                                               borne_max=borne_max)
-                img_shapes.update(img_shape)
+                img_shape = pet_shapes[patient_name]
+                img_size = (img_shape[0] / 100, img_shape[1] / 100)
+            create_mip_from_array(img_data, mip_directory, patient_name, img_size,
+                                  nb_image,
+                                  mask,
+                                  borne_max)
+            if not mask:
+                img_shapes[patient_name] = (img_data.shape[0], img_data.shape[1])
     if not mask:
         return img_shapes
-    else:
-        return
