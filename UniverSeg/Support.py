@@ -32,12 +32,12 @@ class Support:
                 print("\n The label and the map images for the image " + map_file + " don't have the same size \n",
                       file=sys.stderr)
                 continue
-            divided_label_img, non_void_idx = divide(label_img)
+            divided_map_img, non_void_idx = divide(map_img)
             # In our support, the mask was black whereas the mask for UniverSeg is a white area
             if invert_label:
-                divided_label_img = [invert(sub_im) for sub_im in divided_label_img]
-            labels += divided_label_img
-            maps += divide(map_img, non_void_idx)
+                label_img = invert(label_img)
+            labels += divide(label_img, non_void_idx)
+            maps += divided_map_img
         maps = np.array(maps)
         labels = np.array(labels)
         nb_sub_support = maps.shape[0] if maps.shape[0] == labels.shape[0] else None
