@@ -9,6 +9,7 @@ import scipy
 from scipy import ndimage
 import nibabel
 from skimage.transform import downscale_local_mean
+from scipy.ndimage import zoom
 import math
 
 
@@ -31,32 +32,12 @@ def pad_images(images):
 def downscale_images(images, downscale_size: tuple):
     shape = images.shape
     downsampling_factor = (shape[0] // downscale_size[0], shape[1] // downscale_size[1])
+    # downsampling_factor = (downscale_size[0] / shape[0], downscale_size[1] / shape[1])
     downscaled_images = np.zeros((downscale_size[0], downscale_size[0], shape[2]))
     for i in range(shape[2]):
         downscaled_images[:, :, i] = downscale_local_mean(images[:, :, i], downsampling_factor)
+        # downscaled_images[:, :, i] = zoom(images[:, :, i], downsampling_factor)
     return downscaled_images
-
-
-def transform_nifty(img, record_directory: str, patient_reference: str, nb_image=40,
-                       is_mask=False,
-                       borne_max=None,
-                       pet_shapes=None):
-    img_data = img.get_fdata()
-    img_data += 1e-5
-    # We assume the images are square, so shape[0] = shape[1]
-    if not math.log2(img_data.shape[0]).is_integer():
-        img_data = pad_images(img_data)
-    if is_mask and img_data.shape[:2] != pet_shapes[patient_reference]:
-        img_data = downscale_images(img_data, pet_shapes[patient_reference])
-    if pet_shapes is None:
-        img_size = (img_data.shape[0] / 100, img_data.shape[0] / 100)
-    else:
-        img_shape = pet_shapes[patient_reference]
-        img_size = (img_shape[0] / 100, img_shape[1] / 100)
-    create_mip_from_array(img_data, record_directory, patient_reference, img_size,
-                          nb_image,
-                          is_mask,
-                          borne_max)
 
 
 def create_mip_from_array(img_data, record_directory: str, patient_reference: str, img_size: tuple[float, float],
@@ -64,7 +45,7 @@ def create_mip_from_array(img_data, record_directory: str, patient_reference: st
                           is_mask=False,
                           borne_max=None):
     ls_mip = []
-
+    img_data += 1e-5
     for angle in np.linspace(0, 360, nb_image):
         vol_angle = scipy.ndimage.interpolation.rotate(img_data, angle)
 
@@ -92,13 +73,17 @@ def create_mip_from_path(pet_path: str, mask_path: str, record_folder: str, pet_
     if not os.path.exists(os.path.join(os.getcwd(), record_folder)):
         os.mkdir(os.path.join(os.getcwd(), record_folder))
     pet_img_shapes = None
+    non_processed_files = dict()
     if pet_path is not None:
-        pet_img_shapes = generate_from_path(pet_path, record_folder=record_folder, mask=False, borne_max=pet_borne_max,
+        scan_non_processed, pet_img_shapes = generate_from_path(pet_path, record_folder=record_folder, mask=False, borne_max=pet_borne_max,
                                             nb_image=nb_image)
+        non_processed_files['Scans'] = scan_non_processed
     if mask_path is not None:
-        generate_from_path(mask_path, record_folder=record_folder, mask=True, borne_max=mask_borne_max,
+        masks_non_processed = generate_from_path(mask_path, record_folder=record_folder, mask=True, borne_max=mask_borne_max,
                            nb_image=nb_image, pet_shapes=pet_img_shapes)
+        non_processed_files['Masks'] = masks_non_processed
     print("MIP images generated !")
+    return non_processed_files
 
 
 def generate_from_path(file_path: str, record_folder: str, mask=False, borne_max=None,
@@ -117,23 +102,28 @@ def generate_from_path(file_path: str, record_folder: str, mask=False, borne_max
 
     if not mask:
         img_shapes = {}
+    non_processed_files = []
     for pet in pet_files:
         file = os.path.join(file_path, pet)
         if pet.endswith('.nii'):
             img = nibabel.load(file)
             patient_name = pet.split(".")[0]
             img_data = img.get_fdata()
-            img_data += 1e-5
             # We assume the images are square, so shape[0] = shape[1]
+            # In HECKTOR we have some masks that are 511x511 or 512x513
+            is_mask_size_512 = img_data.shape[0] == 512 and img_data.shape[1] == 512
+            is_squared = img_data.shape[0] == img_data.shape[1]
+            if not is_squared or (mask and not is_mask_size_512):
+                non_processed_files.append(pet)
+                continue
             if not math.log2(img_data.shape[0]).is_integer():
                 img_data = pad_images(img_data)
-            if mask and img_data.shape[:2] != pet_shapes[patient_name]:
+            if mask and is_mask_size_512 and pet_shapes.get(patient_name) is not None and img_data.shape[:2] != \
+                    pet_shapes[patient_name]:
                 img_data = downscale_images(img_data, pet_shapes[patient_name])
-            if pet_shapes is None:
-                img_size = (img_data.shape[0] / 100, img_data.shape[0] / 100)
+                img_size = (img_data.shape[0] / 100, img_data.shape[1] / 100)
             else:
-                img_shape = pet_shapes[patient_name]
-                img_size = (img_shape[0] / 100, img_shape[1] / 100)
+                img_size = (img_data.shape[0] / 100, img_data.shape[1] / 100)
             create_mip_from_array(img_data, mip_directory, patient_name, img_size,
                                   nb_image,
                                   mask,
@@ -141,4 +131,5 @@ def generate_from_path(file_path: str, record_folder: str, mask=False, borne_max
             if not mask:
                 img_shapes[patient_name] = (img_data.shape[0], img_data.shape[1])
     if not mask:
-        return img_shapes
+        return non_processed_files, img_shapes
+    return non_processed_files
