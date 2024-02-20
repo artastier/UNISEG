@@ -55,7 +55,7 @@ def create_mip_from_array(img_data, record_directory: str, patient_reference: st
 
 
 def create_mip_from_path(pet_path: str, mask_path: str, record_folder: str, pet_borne_max=None,
-                         mask_borne_max=None, nb_image=1, output_size=(128, 128)):
+                         mask_borne_max=None, nb_image=1, output_size=None):
     if not os.path.exists(os.path.join(os.getcwd(), record_folder)):
         os.mkdir(os.path.join(os.getcwd(), record_folder))
     if pet_path is not None:
@@ -67,7 +67,7 @@ def create_mip_from_path(pet_path: str, mask_path: str, record_folder: str, pet_
 
 
 def generate_from_path(file_path: str, record_folder: str, mask=False, borne_max=None,
-                       nb_image=1, output_size=(128, 128)):
+                       nb_image=1, output_size=None):
     if not os.path.exists(file_path):
         print('The' + file_path + ' folder provided does not exist', file=sys.stderr)
     pet_files = [pet for pet in os.listdir(file_path) if os.path.isfile(os.path.join(file_path, pet))]
@@ -86,7 +86,8 @@ def generate_from_path(file_path: str, record_folder: str, mask=False, borne_max
             img = nibabel.load(file)
             patient_name = pet.split(".")[0]
             img_data = img.get_fdata()
-            if img_data.shape != output_size:
+            print(f"Image size:({img_data.shape[0]}, {img_data.shape[1]}, {img_data.shape[2]})")
+            if (output_size is not None) and (img_data.shape != output_size):
                 img_data = rescale_images(img_data, output_size)
             create_mip_from_array(img_data, mip_directory, patient_name, output_size,
                                   nb_image,
