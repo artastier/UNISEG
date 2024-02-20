@@ -64,6 +64,7 @@ def create_mip_from_path(pet_path: str, mask_path: str, record_folder: str, pet_
     if mask_path is not None:
         generate_from_path(mask_path, record_folder=record_folder, mask=True, borne_max=mask_borne_max,
                            nb_image=nb_image, output_size=output_size)
+    print("MIP images generated !")
 
 
 def generate_from_path(file_path: str, record_folder: str, mask=False, borne_max=None,
