@@ -1,3 +1,5 @@
+__author__ = 'Arthur Astier'
+
 from PyQt5.QtWidgets import QFileDialog, QWidget
 
 
