@@ -1,4 +1,4 @@
-# @author Arthur Astier
+__author__ = "Arthur Astier"
 import os
 from Support import Support
 from Segmenter import Segmenter
@@ -39,7 +39,8 @@ class BatchSegmenter:
             shuffle(filenames)
             if len(filenames) < support_size:
                 print(
-                    "\n The folders you supplied doesn't contain enough files compared to the support size requested. \n",
+                    "\n The folders you supplied doesn't contain enough files compared to the support size requested. "
+                    "\n",
                     file=sys.stderr)
                 continue
             support_batch = filenames[:support_size]
@@ -48,7 +49,7 @@ class BatchSegmenter:
                 support = Support(map_paths[0], label_paths[0], support_batch, invert_label=invert_label)
             else:
                 support = Support(map_paths[batch], label_paths[batch], support_batch, invert_label=invert_label)
-            print(f"Batch n°{batch + 1} - Number of sub-images: {support.maps.shape[1]}")
+            print(f"Batch n°{batch + 1} - Support size: {support.maps.shape[1]}")
             segmenter = Segmenter(test_path, support)
             enhanced_images = compare(gt_path, test_path, segmenter)
             segmented_batches.append(enhanced_images)

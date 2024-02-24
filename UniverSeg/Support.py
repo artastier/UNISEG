@@ -1,10 +1,9 @@
-# @author Arthur Astier
+__author__ = "Arthur Astier"
+
 import os
 import sys
-import numpy as np
 from typing import List
 import skimage.io as io
-from skimage.util import invert
 import torch
 from DivideAndRebuild import divide
 
@@ -12,15 +11,14 @@ from DivideAndRebuild import divide
 class Support:
 
     def __init__(self, map_path: str, label_path: str, support_files: List[str], invert_label: bool = True):
-        self.maps, self.labels = Support.generate_support_from_path(map_path, label_path, support_files,
-                                                                    invert_label)
+        self.maps, self.labels = None, None
+        self.nb_division = None
+        self.generate_support_from_path(map_path, label_path, support_files, invert_label)
 
-    @staticmethod
-    def generate_support_from_path(map_folder_path: str, label_folder_path: str, support_files: List[str],
+    def generate_support_from_path(self, map_folder_path: str, label_folder_path: str, support_files: List[str],
                                    invert_label: bool = True):
-        labels = []
-        maps = []
-        for map_file in support_files:
+        support_size = len(support_files)
+        for support_idx, map_file in enumerate(support_files):
             label_file = os.path.join(label_folder_path, map_file)
             if not os.path.isfile(label_file):
                 print("\n We can't find the label image corresponding to the map image: " + map_file + "\n",
@@ -32,22 +30,24 @@ class Support:
                 print("\n The label and the map images for the image " + map_file + " don't have the same size \n",
                       file=sys.stderr)
                 continue
-            divided_map_img, non_void_idx = divide(map_img)
             # In our support, the mask was black whereas the mask for UniverSeg is a white area
-            if invert_label:
-                label_img = invert(label_img)
-            labels += divide(label_img, non_void_idx)
-            maps += divided_map_img
-        maps = np.array(maps)
-        labels = np.array(labels)
-        nb_sub_support = maps.shape[0] if maps.shape[0] == labels.shape[0] else None
-        if nb_sub_support == 0 or nb_sub_support is None:
+            divided_label = divide(label_img, invert_label)
+            divided_map = divide(map_img)
+            if self.nb_division is None:
+                self.nb_division = min(divided_label.shape[0], divided_map.shape[0])
+                # We use the fact that UniverSeg can handle batches. We consider that a batch corresponds to the
+                # division of an image.
+                self.maps = torch.zeros((self.nb_division, support_size, 1, 128, 128))
+                self.labels = torch.zeros((self.nb_division, support_size, 1, 128, 128))
+            if (len(divided_label) != self.nb_division) or (len(divided_map) != self.nb_division):
+                print("\n The label or the map images can't be divided into the same number of 128x128 patches than "
+                      "the other support images provided.",
+                      file=sys.stderr)
+                continue
+            self.maps[:, support_idx, :, :, :] = divided_map
+            self.labels[:, support_idx, :, :, :] = divided_label
+        if not bool(self.maps.count_nonzero()) and not bool(self.labels.count_nonzero()):
             print(
-                "\n No support has been generated.\n Check if the name of the labels correspond to the name of the maps \n",
+                "\n No support has been generated.\n Check if the name of the labels correspond to the name of the "
+                "maps \n",
                 file=sys.stderr)
-            return None
-        torch_maps = torch.zeros((1, nb_sub_support, 1, 128, 128))
-        torch_labels = torch.zeros((1, nb_sub_support, 1, 128, 128))
-        torch_maps[0, :, 0, :, :] = torch.from_numpy(maps)
-        torch_labels[0, :, 0, :, :] = torch.from_numpy(labels)
-        return torch_maps, torch_labels
