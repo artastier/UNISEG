@@ -20,6 +20,7 @@ class Segmenter:
     def segment_from_path(self, test_folder_path: str, support: Support):
         segmented_images = []
         filenames = os.listdir(test_folder_path)
+        segmented_files = []
         if not filenames:
             print("\n No test images found \n", file=sys.stderr)
             return None
@@ -29,10 +30,11 @@ class Segmenter:
             segmented_divided_img = self.apply_universeg(divided_map_img, support)
             if segmented_divided_img is None:
                 continue
+            segmented_files.append(test_file)
             segmented_img = exposure.rescale_intensity(rebuild(segmented_divided_img, np.shape(map_img)),
                                                        out_range=(0., 1.))
             segmented_images.append(segmented_img)
-        return segmented_images, filenames
+        return segmented_images, segmented_files
 
     def apply_universeg(self, divided_img, support: Support):
         # TODO: Test the function

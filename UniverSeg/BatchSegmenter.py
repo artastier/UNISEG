@@ -26,6 +26,7 @@ class BatchSegmenter:
                                    support_size: int):
         segmented_batches = []
         support_batches = []
+        thresholds = []
         if len(map_paths) > 1 and len(label_paths) > 1 and (
                 len(map_paths) != batch_size or len(label_paths) != batch_size):
             print("\n You haven't supplied as many folders as the number of batches requested \n", file=sys.stderr)
@@ -52,6 +53,7 @@ class BatchSegmenter:
                 support = Support(map_paths[batch], label_paths[batch], support_batch, invert_label=invert_label)
             print(f"Batch n°{batch + 1} - Support size: {support.maps.shape[1]}")
             segmenter = Segmenter(test_path, support)
-            enhanced_images, thresholds = compare(gt_path, test_path, segmenter)
+            enhanced_images, thresholds_batch = compare(gt_path, test_path, segmenter)
             segmented_batches.append(enhanced_images)
+            thresholds.append(thresholds_batch)
         return segmented_batches, support_batches, os.listdir(test_path), thresholds
