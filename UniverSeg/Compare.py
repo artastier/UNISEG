@@ -1,4 +1,5 @@
-# @author Arthur Astier
+__author__ = "Arthur Astier"
+
 from Segmenter import Segmenter
 from skimage.util import invert
 import skimage.io as io
@@ -11,7 +12,7 @@ import sys
 
 def compare(ground_truth_path: str, test_folder_path: str, segmenter: Segmenter, invert_label=True):
     enhanced_images = []
-
+    thresholds = []
     for idx, filename in enumerate(segmenter.filenames):
         gt_mask_file = os.path.join(ground_truth_path, filename)
         test_mask_file = os.path.join(test_folder_path, filename)
@@ -23,14 +24,16 @@ def compare(ground_truth_path: str, test_folder_path: str, segmenter: Segmenter,
         else:
             gt_mask = io.imread(gt_mask_file, as_gray=True).astype(float)
         test_img = io.imread(test_mask_file, as_gray=True).astype(float)
-        predicted_mask = segmenter.segmented_images[idx]
-        if gt_mask.shape != predicted_mask.shape:
+        prediction = segmenter.segmented_images[idx]
+        if gt_mask.shape != prediction.shape:
             print("\n The shape of the ground truth mask doesn't match with the shape of the predicted mask \n",
                   file=sys.stderr)
             continue
+        predicted_mask, threshold = optimize_threshold(dice_score, test_img, gt_mask, prediction)
         enhanced_images.append(color_enhanced(test_img, gt_mask, predicted_mask))
+        thresholds.append(threshold)
         # enhanced_images.append(predicted_mask)
-    return enhanced_images
+    return enhanced_images, thresholds
 
 
 def color_enhanced(test_image, gt_mask, predicted_mask):
@@ -50,3 +53,19 @@ def color_enhanced(test_image, gt_mask, predicted_mask):
 
     return exposure.rescale_intensity(enhanced_image,
                                       out_range=(0., 1.))
+
+
+# Optimize trheshold before enhancing images
+def optimize_threshold(metric, test_image, gt_mask, prediction):
+    thresholds = np.linspace(0.93, 1, 30)
+    scores = np.array([metric(test_image, gt_mask, prediction > threshold) for threshold in thresholds])
+    best_threshold = thresholds[np.argmax(scores)]
+    return prediction > best_threshold, best_threshold
+
+
+def dice_score(test_image, gt_mask, predicted_mask):
+    gt_mask_idx = np.where(gt_mask == 1)
+    predicted_mask_idx = np.where(predicted_mask == 1)
+    intersection_idx = np.where((gt_mask + predicted_mask) / 2 == 1)
+    score = 2 * len(intersection_idx[0]) / (len(gt_mask_idx[0]) + len(predicted_mask_idx[0]))
+    return score

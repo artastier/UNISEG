@@ -13,11 +13,11 @@ from universeg import universeg
 
 
 class Segmenter:
-    def __init__(self, test_folder_path: str, support: Support, threshold: float = 0.95):
+    def __init__(self, test_folder_path: str, support: Support):
         self.model = universeg(pretrained=True)
-        self.segmented_images, self.filenames = self.segment_from_path(test_folder_path, support, threshold)
+        self.segmented_images, self.filenames = self.segment_from_path(test_folder_path, support)
 
-    def segment_from_path(self, test_folder_path: str, support: Support, threshold: float = 0.95):
+    def segment_from_path(self, test_folder_path: str, support: Support):
         segmented_images = []
         filenames = os.listdir(test_folder_path)
         if not filenames:
@@ -31,9 +31,7 @@ class Segmenter:
                 continue
             segmented_img = exposure.rescale_intensity(rebuild(segmented_divided_img, np.shape(map_img)),
                                                        out_range=(0., 1.))
-            # The segmented image is not a real binary mask
-            # They explain in the publication that thresholding can decrease the performance of the Network
-            segmented_images.append(segmented_img > threshold)
+            segmented_images.append(segmented_img)
         return segmented_images, filenames
 
     def apply_universeg(self, divided_img, support: Support):
