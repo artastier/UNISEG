@@ -11,4 +11,4 @@ if __name__ == "__main__":
     mask_path = "patients/Full_body_masks"#PathSelection("(Optional) Select the image folder/file you want transform to MIP").directory
     record_folder = "Full_body"
     non_processed_files = create_mip_from_path(pet_path, mask_path, record_folder, pet_borne_max=7,
-                                               mask_borne_max=None, nb_image=1, output_size=[(300, 500)])
+                                               mask_borne_max=None, nb_image=1, output_size=(300, 500))
