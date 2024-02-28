@@ -8,25 +8,7 @@ import numpy as np
 import scipy
 from scipy import ndimage
 import nibabel
-from scipy.ndimage import zoom
-import concurrent.futures
-
-
-def rescale_images(images, rescale_size: tuple):
-    shape = images.shape
-    # With transpositions in create_mip_from_array, the first and the last dimensions of the original image represents
-    # the wanted view for our problem
-    rescale_factor = (rescale_size[0] / shape[0], rescale_size[1] / shape[2])
-    unchanged_shape = shape[1]
-    rescaled_images = np.zeros((rescale_size[0], unchanged_shape, rescale_size[1]))
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        futures = [executor.submit(zoom, images[:, i, :], rescale_factor) for i in range(unchanged_shape)]
-
-    # Wait for all tasks to complete and retrieve the results
-    results = concurrent.futures.as_completed(futures)
-    for idx, zoomed_array in enumerate(results):
-        rescaled_images[:, idx, :] = zoomed_array.result()
-    return rescaled_images
+from nibabel.processing import resample_from_to
 
 
 def create_mip_from_array(img_data, record_directory: str, patient_reference: str,
@@ -88,12 +70,13 @@ def generate_from_path(file_path: str, record_folder: str, mask=False, borne_max
         if pet.endswith('.nii'):
             img = nibabel.load(file)
             patient_name = pet.split(".")[0]
-            img_data = img.get_fdata()
             if type(output_size) is dict:
                 # If the file isn't in the size provided, it returns none and there is no rescale of the image.
                 rescale_size = output_size.get(patient_name)
             else:
                 rescale_size = output_size
-            if (rescale_size is not None) and (img_data.shape != rescale_size):
-                img_data = rescale_images(img_data, rescale_size)
+            if (rescale_size is not None) and (
+                    (img.shape != rescale_size[0]).any() or (img.affine != rescale_size[1]).any()):
+                img = resample_from_to(img, rescale_size)
+            img_data = img.get_fdata()
             create_mip_from_array(img_data, mip_directory, patient_name, nb_image, mask, borne_max)
