@@ -57,7 +57,7 @@ def color_enhanced(test_image, gt_mask, predicted_mask):
 
 # Optimize trheshold before enhancing images
 def optimize_threshold(metric, test_image, gt_mask, prediction):
-    thresholds = np.linspace(0.93, 1, 30)
+    thresholds = np.linspace(0.93, 1, 100)
     scores = np.array([metric(test_image, gt_mask, prediction > threshold) for threshold in thresholds])
     best_threshold = thresholds[np.argmax(scores)]
     return prediction > best_threshold, best_threshold
