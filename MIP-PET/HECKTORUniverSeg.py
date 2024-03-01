@@ -36,14 +36,14 @@ def extract_scan_size(scans_path: str):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    pet_path = "patients/Test"  # PathSelection("(Optional) Select the image folder/file you want transform to MIP").directory
-    mask_path = "patients/Test_mask"  # PathSelection("(Optional) Select the image folder/file you want transform to MIP").directory
-    record_folder = "Test"
+    pet_path = PathSelection("(Optional) Select the image folder/file you want transform to MIP").directory
+    mask_path = PathSelection("(Optional) Select the image folder/file you want transform to MIP").directory
+    record_folder = "Chest"
     scan_sizes = extract_scan_size(pet_path)
     create_mip_from_path(pet_path, mask_path, record_folder, pet_borne_max=7,
                          mask_borne_max=None, nb_image=1, output_size=scan_sizes)
-    pet_path = "Test/PET"
-    mask_path = "Test/Mask"
+    pet_path = "Chest/PET"
+    mask_path = "Chest/Mask"
     enhanced_images = compare(mask_path, pet_path)
     for image in enhanced_images:
         plt.figure()

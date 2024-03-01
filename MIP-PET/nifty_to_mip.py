@@ -77,6 +77,8 @@ def generate_from_path(file_path: str, record_folder: str, mask=False, borne_max
                 rescale_size = output_size
             if (rescale_size is not None) and (
                     (img.shape != rescale_size[0]).any() or (img.affine != rescale_size[1]).any()):
+                # This is the better way we found to rescale images because the mask and the scan can have different
+                # affine.
                 img = resample_from_to(img, rescale_size)
             img_data = img.get_fdata()
             create_mip_from_array(img_data, mip_directory, patient_name, nb_image, mask, borne_max)
