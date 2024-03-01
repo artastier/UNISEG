@@ -37,12 +37,16 @@ class Segmenter:
         return segmented_images, segmented_files
 
     def apply_universeg(self, divided_img, support: Support):
-        # TODO: Test the function
         if support.maps.shape[0] != divided_img.shape[0]:
             print("\n The support images and the query image aren't divided in the same number of 128x128 patches \n",
                   file=sys.stderr)
             return None
-        # We have tried to parallelize by duplicating the support and put each sub-image in a batch
-        # But it led to SIGKILL because of too much memory requirements.
-        prediction = self.model(divided_img, support.maps, support.labels)
-        return prediction.detach().numpy()
+        # If we provide a torch tensor with the batch size (see UniverSeg documentation) equal to the number of 128x128
+        # patches in the image, we are limited in the number of support. Hence, we apply one model on 1 sub image to
+        # avoid SIGKILL with small support size.
+        predictions = np.zeros(divided_img.shape)
+        nb_subdivisions = divided_img.shape[0]
+        for idx in range(nb_subdivisions):
+            predictions[idx] = self.model(divided_img[idx:idx + 1], support.maps[idx:idx + 1],
+                                          support.labels[idx:idx + 1])[0].detach().numpy()
+        return predictions
