@@ -31,5 +31,5 @@ if __name__ == "__main__":
     record_folder = "Full_body"
 
     # Generate MIP images from the selected paths
-    non_processed_files = create_mip_from_path(pet_path, mask_path, record_folder, pet_borne_max=7,
-                                               mask_borne_max=None, nb_image=1)
+    create_mip_from_path(pet_path, mask_path, record_folder, pet_borne_max=7,
+                         mask_borne_max=None, nb_image=1)
