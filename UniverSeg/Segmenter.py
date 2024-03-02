@@ -42,11 +42,13 @@ class Segmenter:
                   file=sys.stderr)
             return None
         # If we provide a torch tensor with the batch size (see UniverSeg documentation) equal to the number of 128x128
-        # patches in the image, we are limited in the number of support. Hence, we apply one model on 1 sub image to
-        # avoid SIGKILL with small support size.
+        # patches in the image, we are limited in the number of support, and we get unsatisfactory results. Hence, we
+        # apply one model on 1 sub image to avoid SIGKILL with small support size.
         predictions = np.zeros(divided_img.shape)
         nb_subdivisions = divided_img.shape[0]
         for idx in range(nb_subdivisions):
+            # We didn't use the sigmoid function as proposed in the Google Colab of UniverSeg because it was too
+            # restrictive. Therefore, we optimized a manual threshold using the Dice score in Compare.py.
             predictions[idx] = self.model(divided_img[idx:idx + 1], support.maps[idx:idx + 1],
                                           support.labels[idx:idx + 1])[0].detach().numpy()
         return predictions
