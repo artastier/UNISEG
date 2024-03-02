@@ -32,4 +32,4 @@ if __name__ == "__main__":
 
     # Generate MIP images from the selected paths
     non_processed_files = create_mip_from_path(pet_path, mask_path, record_folder, pet_borne_max=7,
-                                               mask_borne_max=None, nb_image=1, output_size=(300, 500))
+                                               mask_borne_max=None, nb_image=1)
