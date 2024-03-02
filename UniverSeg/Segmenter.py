@@ -1,23 +1,58 @@
+"""
+@file
+@brief This script defines a Segmenter class for segmenting images using the UniverSeg model.
+
+@author Arthur Astier
+
+@section dependencies
+- os
+- sys
+- skimage.io
+- skimage.exposure
+- numpy
+- DivideAndRebuild
+- Support
+- universeg
+
+@section classes
+- @b Segmenter: Class for segmenting images using the UniverSeg model.
+
+"""
+
 __author__ = "Arthur Astier"
 
 import os
 import sys
 import skimage.io as io
 from skimage import exposure
-from skimage.filters import threshold_otsu
 import numpy as np
-import torch
 from DivideAndRebuild import divide, rebuild
 from Support import Support
 from universeg import universeg
 
-
 class Segmenter:
+    """
+    Class for segmenting images using the UNet model.
+    """
+
     def __init__(self, test_folder_path: str, support: Support):
+        """
+        Initializes the Segmenter class.
+
+        @param test_folder_path: Path to the test folder.
+        @param support: Support object containing support data.
+        """
         self.model = universeg(pretrained=True)
         self.segmented_images, self.filenames = self.segment_from_path(test_folder_path, support)
 
     def segment_from_path(self, test_folder_path: str, support: Support):
+        """
+        Segments images from a specified folder path.
+
+        @param test_folder_path: Path to the test folder.
+        @param support: Support object containing support data.
+        @return: Segmented images and their filenames.
+        """
         segmented_images = []
         filenames = os.listdir(test_folder_path)
         segmented_files = []
@@ -37,18 +72,20 @@ class Segmenter:
         return segmented_images, segmented_files
 
     def apply_universeg(self, divided_img, support: Support):
+        """
+        Applies the UNet model for image segmentation.
+
+        @param divided_img: Divided image patches.
+        @param support: Support object containing support data.
+        @return: Segmented image predictions.
+        """
         if support.maps.shape[0] != divided_img.shape[0]:
             print("\n The support images and the query image aren't divided in the same number of 128x128 patches \n",
                   file=sys.stderr)
             return None
-        # If we provide a torch tensor with the batch size (see UniverSeg documentation) equal to the number of 128x128
-        # patches in the image, we are limited in the number of support, and we get unsatisfactory results. Hence, we
-        # apply one model on 1 sub image to avoid SIGKILL with small support size.
         predictions = np.zeros(divided_img.shape)
         nb_subdivisions = divided_img.shape[0]
         for idx in range(nb_subdivisions):
-            # We didn't use the sigmoid function as proposed in the Google Colab of UniverSeg because it was too
-            # restrictive. Therefore, we optimized a manual threshold using the Dice score in Compare.py.
             predictions[idx] = self.model(divided_img[idx:idx + 1], support.maps[idx:idx + 1],
                                           support.labels[idx:idx + 1])[0].detach().numpy()
         return predictions

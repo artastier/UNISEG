@@ -1,3 +1,32 @@
+"""
+@file
+@brief BatchSegmenter class for segmenting batches of images.
+
+@author Arthur Astier
+
+@section dependencies
+- Support
+- Segmenter
+- Compare
+- skimage.exposure
+- matplotlib.pyplot
+- os
+- sys
+
+@section functions
+- @b BatchSegmenter: Class for segmenting batches of images.
+- @b create_and_segment_batches: Method to create and segment batches of images.
+- @b save_results: Method to save the segmented batches and logs.
+
+@section parameters
+- @b map_paths: List of paths to map folders.
+- @b label_paths: List of paths to label folders.
+- @b test_path: Path to the test folder.
+- @b gt_path: Path to the ground truth folder.
+- @b batch_size: Number of batches to process.
+- @b support_size: Size of the support.
+- @b invert_label: Boolean flag to invert label images (optional, default is True).
+"""
 __author__ = "Arthur Astier"
 
 import os
@@ -12,9 +41,24 @@ import sys
 
 
 class BatchSegmenter:
+    """
+    BatchSegmenter class is responsible for batch processing of segmentation tasks.
+    """
+
     def __init__(self, map_paths: List[str], label_paths: List[str], test_path: str, gt_path: str, batch_size: int,
                  support_size: int,
                  invert_label: bool = True):
+        """
+        Constructor method for BatchSegmenter.
+
+        :param map_paths: List of paths to the maps.
+        :param label_paths: List of paths to the labels.
+        :param test_path: Path to the test data.
+        :param gt_path: Path to the ground truth data.
+        :param batch_size: Size of each batch.
+        :param support_size: Size of the support.
+        :param invert_label: Flag indicating whether to invert the label or not.
+        """
         self.batch_size = batch_size
         self.segmented_batches, self.support_batches, self.test_filenames, self.thresholds = BatchSegmenter.create_and_segment_batches(
             map_paths, label_paths, test_path, gt_path,
@@ -27,6 +71,18 @@ class BatchSegmenter:
                                    invert_label: bool,
                                    batch_size: int,
                                    support_size: int):
+        """
+        Static method to create and segment batches.
+
+        :param map_paths: List of paths to the maps.
+        :param label_paths: List of paths to the labels.
+        :param test_path: Path to the test data.
+        :param gt_path: Path to the ground truth data.
+        :param invert_label: Flag indicating whether to invert the label or not.
+        :param batch_size: Size of each batch.
+        :param support_size: Size of the support.
+        :return: Segmented batches, support batches, test filenames, and thresholds.
+        """
         segmented_batches = []
         support_batches = []
         thresholds = []
@@ -62,6 +118,9 @@ class BatchSegmenter:
         return segmented_batches, support_batches, os.listdir(test_path), thresholds
 
     def save_results(self):
+        """
+        Method to save the segmentation results.
+        """
         if not os.path.exists(os.path.join(os.getcwd(), 'Results')):
             os.mkdir(os.path.join(os.getcwd(), 'Results'))
         for batch in range(self.batch_size):

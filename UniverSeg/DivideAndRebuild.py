@@ -1,3 +1,28 @@
+"""
+@file
+@brief This script provides functions for dividing and rebuilding images.
+
+@author Arthur Astier
+
+@section dependencies
+- skimage.exposure
+- torch
+- typing.Tuple
+- skimage.util.invert
+- numpy
+
+@section functions
+- @b divide: Divides an image into smaller patches.
+- @b rebuild: Rebuilds an image from smaller patches.
+
+@section parameters Parameters
+- @b img: Input image to be divided or rebuilt.
+- @b to_invert: Boolean flag to invert the image patches (optional).
+- @b divided_imgs: Divided image patches.
+- @b img_shape: Shape of the original image.
+
+"""
+
 __author__ = "Arthur Astier"
 
 from skimage import exposure
@@ -9,7 +34,13 @@ import sys
 
 
 def divide(img, to_invert: bool = False):
-    # Using exposure.rescale_intensity keep the float64 type of our image
+    """
+    Divides an image into smaller patches.
+
+    @param img: Input image to be divided.
+    @param to_invert: Boolean flag to invert the image patches (default is False).
+    @return: Tensor containing divided image patches.
+    """
     img = exposure.rescale_intensity(img, out_range=(0., 1.))
     img_shape = np.shape(img)
     if img_shape[0] % 128 != 0 or img_shape[1] % 128 != 0:
@@ -31,6 +62,13 @@ def divide(img, to_invert: bool = False):
 
 
 def rebuild(divided_imgs, img_shape: Tuple[int, int]):
+    """
+    Rebuilds an image from smaller patches.
+
+    @param divided_imgs: Tensor containing divided image patches.
+    @param img_shape: Shape of the original image.
+    @return: Reconstructed image.
+    """
     img = np.ones(img_shape, dtype=float)
     width = img_shape[1] // 128
     height = img_shape[0] // 128

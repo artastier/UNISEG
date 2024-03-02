@@ -1,3 +1,33 @@
+"""
+@file
+@brief This script defines functions for comparing predicted segmentation masks with ground truth masks.
+
+@author Arthur Astier
+
+@section dependencies
+- Segmenter
+- skimage.util.invert
+- skimage.io
+- skimage.color
+- skimage.exposure
+- numpy
+- os
+- sys
+
+@section functions
+- @b compare: Compares predicted segmentation masks with ground truth masks.
+- @b color_enhanced: Enhances images with color to visualize comparison.
+- @b optimize_threshold: Optimizes threshold for binary classification.
+- @b dice_score: Computes the Dice similarity coefficient for binary segmentation masks.
+
+@section parameters
+- @b ground_truth_path: Path to the folder containing ground truth masks.
+- @b test_folder_path: Path to the folder containing test images.
+- @b segmenter: Segmenter object containing segmented images.
+- @b invert_label: Boolean flag to invert label images (optional, default is True).
+
+"""
+
 __author__ = "Arthur Astier"
 
 from Segmenter import Segmenter
@@ -11,6 +41,15 @@ import sys
 
 
 def compare(ground_truth_path: str, test_folder_path: str, segmenter: Segmenter, invert_label=True):
+    """
+    Compares predicted segmentation masks with ground truth masks.
+
+    @param ground_truth_path: Path to the folder containing ground truth masks.
+    @param test_folder_path: Path to the folder containing test images.
+    @param segmenter: Segmenter object containing segmented images.
+    @param invert_label: Boolean flag to invert label images (default is True).
+    @return: Enhanced images and corresponding thresholds.
+    """
     enhanced_images = []
     thresholds = []
     for idx, filename in enumerate(segmenter.filenames):
@@ -32,11 +71,18 @@ def compare(ground_truth_path: str, test_folder_path: str, segmenter: Segmenter,
         predicted_mask, threshold = optimize_threshold(dice_score, test_img, gt_mask, prediction)
         enhanced_images.append(color_enhanced(test_img, gt_mask, predicted_mask))
         thresholds.append(threshold)
-        # enhanced_images.append(predicted_mask)
     return enhanced_images, thresholds
 
 
 def color_enhanced(test_image, gt_mask, predicted_mask):
+    """
+    Enhances images with color to visualize comparison.
+
+    @param test_image: Test image.
+    @param gt_mask: Ground truth mask.
+    @param predicted_mask: Predicted mask.
+    @return: Enhanced image.
+    """
     enhanced_image = color.gray2rgb(test_image).copy()
 
     gt_mask_idx = np.where(gt_mask == 1)
@@ -51,12 +97,19 @@ def color_enhanced(test_image, gt_mask, predicted_mask):
     intersection_nb_pixels = intersection_idx[0].shape
     enhanced_image[intersection_idx] += np.repeat(np.array([[0.3, 0.3, 0]]), intersection_nb_pixels, axis=0)
 
-    return exposure.rescale_intensity(enhanced_image,
-                                      out_range=(0., 1.))
+    return exposure.rescale_intensity(enhanced_image, out_range=(0., 1.))
 
 
-# Optimize trheshold before enhancing images
 def optimize_threshold(metric, test_image, gt_mask, prediction):
+    """
+    Optimizes threshold for binary classification.
+
+    @param metric: Evaluation metric function.
+    @param test_image: Test image.
+    @param gt_mask: Ground truth mask.
+    @param prediction: Predicted mask.
+    @return: Binary mask and optimized threshold.
+    """
     thresholds = np.linspace(0.90, 1, 100)
     scores = np.array([metric(test_image, gt_mask, prediction > threshold) for threshold in thresholds])
     best_threshold = thresholds[np.argmax(scores)]
@@ -64,6 +117,14 @@ def optimize_threshold(metric, test_image, gt_mask, prediction):
 
 
 def dice_score(test_image, gt_mask, predicted_mask):
+    """
+    Computes the Dice similarity coefficient for binary segmentation masks.
+
+    @param test_image: Test image.
+    @param gt_mask: Ground truth mask.
+    @param predicted_mask: Predicted mask.
+    @return: Dice score.
+    """
     gt_mask_idx = np.where(gt_mask == 1)
     predicted_mask_idx = np.where(predicted_mask == 1)
     intersection_idx = np.where((gt_mask + predicted_mask) / 2 == 1)
