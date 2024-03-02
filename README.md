@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 This repository is the result of an academic project named UNISEG (Universal Segmentation) at Ecole Centrale in
-Nantes, France, with my classmate @damien-gautier-nantes. The aim of this project was to evaluate the performance of
+Nantes, France, with my classmate [@damien-gautier-nantes](https://github.com/damien-gautier-nantes). The aim of this project was to evaluate the performance of
 universal segmentation models for segmenting cancerous lesions. The UniverSeg and Segment Anything (SAM) models were
 tested.
 
