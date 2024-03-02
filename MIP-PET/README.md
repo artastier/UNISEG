@@ -30,7 +30,8 @@ if __name__ == "__main__":
 
 - The ```pet_path``` and ```mask_path``` are decoupled. If one of them is equal to ```None``` it will only process the
   supplied folder.
-- ```pet_borne_max``` and ```mask_borne_max``` define the ```vmax``` parameter of the grayscale colormap used to record the
+- ```pet_borne_max``` and ```mask_borne_max``` define the ```vmax``` parameter of the grayscale colormap used to record
+  the
   MIP images.
 - ```nb_image``` corresponds to the number images we want in output. Each image will be rotated of ```360/nb_image°```
   angle at each iteration.
@@ -52,3 +53,16 @@ These two parameters are required to apply
 the [```resample_from_to```](https://neuroimaging-data-science.org/content/005-nipy/003-transforms.html) method
 contained in the ```nibabel.processing```
 module. If the key is missing or wrong, the image won't be rescaled without generating errors.
+
+## Rename HECKTOR scans
+
+Because in UniverSeg the mask and the scan must have the same filename, we made this small script to rename
+the ```nifti``` scans from HECKTOR dataset.
+```python
+import os
+
+path = "<path/HECKTOR/Scans>"
+for filename in os.listdir(path):
+	split_file = filename.split("_")
+	os.rename(path + "/"+filename,path + "/"+split_file[0]+split_file[2][2:])
+```
