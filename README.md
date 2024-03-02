@@ -13,7 +13,7 @@ neck tumors.
 For confidentiality reasons we can't expose our results in images on GitHub.
 
 # Usage :
-
+The use of our code is described in each README of ```UniverSeg``` and ```SAM``` folders.
 ## Download UniverSeg model
 
 ```shell
