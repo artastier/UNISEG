@@ -1,6 +1,14 @@
+"""
+@author: @paul-bd and Arthur Astier
+
+This module provides functions for generating Maximum Intensity Projection (MIP) images from PET scan data.
+
+@paul-bd: https://github.com/paul-bd/MIP-PET.git.
+
+"""
+
 __author__ = "@paul-bd and Arthur Astier"
 
-# https://github.com/paul-bd/MIP-PET.git
 import os
 import sys
 import matplotlib.pyplot as plt
@@ -15,6 +23,21 @@ def create_mip_from_array(img_data, record_directory: str, patient_reference: st
                           nb_image=40,
                           is_mask=False,
                           borne_max=None):
+    """
+    Create MIP images from a 3D numpy array representing PET scan data.
+
+    Args:
+        img_data (ndarray): 3D numpy array representing PET scan data.
+        record_directory (str): Directory to save the generated MIP images.
+        patient_reference (str): Patient reference for naming the MIP images.
+        nb_image (int): Number of images to generate for MIP.
+        is_mask (bool): Flag indicating whether the data is a mask or not.
+        borne_max (float): Maximum value for image intensity.
+
+    Returns:
+        None
+
+    """
     ls_mip = []
     img_data += 1e-5
     for angle in np.linspace(0, 360, nb_image):
@@ -38,6 +61,22 @@ def create_mip_from_array(img_data, record_directory: str, patient_reference: st
 
 def create_mip_from_path(pet_path: str, mask_path: str, record_folder: str, pet_borne_max=None,
                          mask_borne_max=None, nb_image=1, output_size=None):
+    """
+    Generate MIP images from PET and mask files.
+
+    Args:
+        pet_path (str): Path to the PET files.
+        mask_path (str): Path to the mask files.
+        record_folder (str): Folder to record the generated MIP images.
+        pet_borne_max (float): Maximum value for PET image intensity.
+        mask_borne_max (float): Maximum value for mask image intensity.
+        nb_image (int): Number of images to generate for MIP.
+        output_size (dict or tuple): Output size for the generated images.
+
+    Returns:
+        None
+
+    """
     if not os.path.exists(os.path.join(os.getcwd(), record_folder)):
         os.mkdir(os.path.join(os.getcwd(), record_folder))
     if pet_path is not None:
@@ -51,6 +90,21 @@ def create_mip_from_path(pet_path: str, mask_path: str, record_folder: str, pet_
 
 def generate_from_path(file_path: str, record_folder: str, mask=False, borne_max=None,
                        nb_image=1, output_size=None):
+    """
+    Generate MIP images from files.
+
+    Args:
+        file_path (str): Path to the input files.
+        record_folder (str): Folder to record the generated MIP images.
+        mask (bool): Flag indicating whether the files are masks or not.
+        borne_max (float): Maximum value for image intensity.
+        nb_image (int): Number of images to generate for MIP.
+        output_size (dict or tuple): Output size for the generated images.
+
+    Returns:
+        None
+
+    """
     if not os.path.exists(file_path):
         print('The' + file_path + ' folder provided does not exist', file=sys.stderr)
         return
