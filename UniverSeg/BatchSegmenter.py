@@ -1,6 +1,8 @@
 __author__ = "Arthur Astier"
 
 import os
+from skimage import exposure
+import matplotlib.pyplot as plt
 from Support import Support
 from Segmenter import Segmenter
 from Compare import compare
@@ -13,6 +15,7 @@ class BatchSegmenter:
     def __init__(self, map_paths: List[str], label_paths: List[str], test_path: str, gt_path: str, batch_size: int,
                  support_size: int,
                  invert_label: bool = True):
+        self.batch_size = batch_size
         self.segmented_batches, self.support_batches, self.test_filenames, self.thresholds = BatchSegmenter.create_and_segment_batches(
             map_paths, label_paths, test_path, gt_path,
             invert_label,
@@ -57,3 +60,23 @@ class BatchSegmenter:
             segmented_batches.append(enhanced_images)
             thresholds.append(thresholds_batch)
         return segmented_batches, support_batches, os.listdir(test_path), thresholds
+
+    def save_results(self):
+        if not os.path.exists(os.path.join(os.getcwd(), 'Results')):
+            os.mkdir(os.path.join(os.getcwd(), 'Results'))
+        for batch in range(self.batch_size):
+            segmented_images = self.segmented_batches[batch]
+            for idx, image in enumerate(segmented_images):
+                filename = self.test_filenames[idx]
+                subject_directory = 'Results/' + filename
+                if not os.path.exists(os.path.join(os.getcwd(), subject_directory)):
+                    os.mkdir(os.path.join(os.getcwd(), subject_directory))
+                image = exposure.rescale_intensity(image, out_range=(0., 1.))
+                plt.imsave(subject_directory + f'/Batch_n°{batch + 1}_' + filename, image)
+                with open(os.path.join(subject_directory, "logs.txt"), 'a') as file:
+                    file.write(f"\nSupport Batch n°{batch + 1}:\n")
+                    for element in self.support_batches[batch]:
+                        file.write(str(element) + '\n')
+                    threshold = self.thresholds[batch][idx]
+                    file.write(f'Threshold: {threshold} \n')
+                    file.close()
