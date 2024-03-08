@@ -67,8 +67,11 @@ def extract_scan_size(scans_path: str):
         if pet.endswith('.nii'):
             img = nibabel.load(file)
             patient_name = pet.split(".")[0]
-            shape = find_nearest_power_2(img.shape)
-            scan_sizes[patient_name] = (shape[:3].astype(int), img.affine)
+            output_shape = find_nearest_power_2(img.shape).astype(int)
+            scaling_factors = np.ones(4)
+            scaling_factors[:3] = img.shape / output_shape
+            output_affine = img.affine @ np.diag(scaling_factors)
+            scan_sizes[patient_name] = (output_shape, output_affine)
     return scan_sizes
 
 
