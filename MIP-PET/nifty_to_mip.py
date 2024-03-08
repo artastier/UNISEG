@@ -19,7 +19,7 @@ import nibabel
 from nibabel.processing import resample_from_to
 
 
-def create_mip_from_array(img_data, record_directory: str, patient_reference: str,
+def create_mip_from_array(img, record_directory: str, patient_reference: str,
                           nb_image=40,
                           is_mask=False,
                           borne_max=None):
@@ -27,7 +27,7 @@ def create_mip_from_array(img_data, record_directory: str, patient_reference: st
     Create MIP images from a 3D numpy array representing PET scan data.
 
     Args:
-        img_data (ndarray): 3D numpy array representing PET scan data.
+        img (ndarray): 3D numpy array representing PET scan data.
         record_directory (str): Directory to save the generated MIP images.
         patient_reference (str): Patient reference for naming the MIP images.
         nb_image (int): Number of images to generate for MIP.
@@ -39,6 +39,7 @@ def create_mip_from_array(img_data, record_directory: str, patient_reference: st
 
     """
     ls_mip = []
+    img_data = img.get_fdata()
     img_data += 1e-5
     for angle in np.linspace(0, 360, nb_image):
         vol_angle = scipy.ndimage.interpolation.rotate(img_data, angle)
@@ -134,5 +135,4 @@ def generate_from_path(file_path: str, record_folder: str, mask=False, borne_max
                 # This is the better way we found to rescale images because the mask and the scan can have different
                 # affine.
                 img = resample_from_to(img, rescale_size)
-            img_data = img.get_fdata()
-            create_mip_from_array(img_data, mip_directory, patient_name, nb_image, mask, borne_max)
+            create_mip_from_array(img, mip_directory, patient_name, nb_image, mask, borne_max)
