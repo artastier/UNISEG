@@ -29,6 +29,8 @@ import numpy as np
 from DivideAndRebuild import divide, rebuild
 from Support import Support
 from universeg import universeg
+import torch
+
 
 class Segmenter:
     """
@@ -86,6 +88,6 @@ class Segmenter:
         predictions = np.zeros(divided_img.shape)
         nb_subdivisions = divided_img.shape[0]
         for idx in range(nb_subdivisions):
-            predictions[idx] = self.model(divided_img[idx:idx + 1], support.maps[idx:idx + 1],
-                                          support.labels[idx:idx + 1])[0].detach().numpy()
+            predictions[idx] = torch.sigmoid(self.model(divided_img[idx:idx + 1], support.maps[idx:idx + 1],
+                                                        support.labels[idx:idx + 1])[0]).detach().numpy()
         return predictions

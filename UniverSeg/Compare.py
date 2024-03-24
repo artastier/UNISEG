@@ -110,7 +110,7 @@ def optimize_threshold(metric, test_image, gt_mask, prediction):
     @param prediction: Predicted mask.
     @return: Binary mask and optimized threshold.
     """
-    thresholds = np.linspace(0.90, 1, 100)
+    thresholds = np.linspace(0.50, 1, 200)
     scores = np.array([metric(test_image, gt_mask, prediction > threshold) for threshold in thresholds])
     best_threshold = thresholds[np.argmax(scores)]
     return prediction > best_threshold, best_threshold
