@@ -16,9 +16,8 @@
 
 @section functions
 - @b compare: Compares predicted segmentation masks with ground truth masks.
-- @b color_enhanced: Enhances images with color to visualize comparison.
-- @b optimize_threshold: Optimizes threshold for binary classification.
-- @b dice_score: Computes the Dice similarity coefficient for binary segmentation masks.
+- @b color_enhanced: Enhances images with color to visualize comparison and return the dice score of the predicted
+ segmentation.
 
 @section parameters
 - @b ground_truth_path: Path to the folder containing ground truth masks.
@@ -51,7 +50,7 @@ def compare(ground_truth_path: str, test_folder_path: str, segmenter: Segmenter,
     @return: Enhanced images and corresponding thresholds.
     """
     enhanced_images = []
-    thresholds = []
+    dice_scores = []
     for idx, filename in enumerate(segmenter.filenames):
         gt_mask_file = os.path.join(ground_truth_path, filename)
         test_mask_file = os.path.join(test_folder_path, filename)
@@ -68,10 +67,10 @@ def compare(ground_truth_path: str, test_folder_path: str, segmenter: Segmenter,
             print("\n The shape of the ground truth mask doesn't match with the shape of the predicted mask \n",
                   file=sys.stderr)
             continue
-        predicted_mask, threshold = optimize_threshold(dice_score, test_img, gt_mask, prediction)
-        enhanced_images.append(color_enhanced(test_img, gt_mask, predicted_mask))
-        thresholds.append(threshold)
-    return enhanced_images, thresholds
+        enhanced_img, dice_score = color_enhanced(test_img, gt_mask, prediction)
+        enhanced_images.append(enhanced_img)
+        dice_scores.append(dice_score)
+    return enhanced_images, dice_scores
 
 
 def color_enhanced(test_image, gt_mask, predicted_mask):
@@ -81,7 +80,7 @@ def color_enhanced(test_image, gt_mask, predicted_mask):
     @param test_image: Test image.
     @param gt_mask: Ground truth mask.
     @param predicted_mask: Predicted mask.
-    @return: Enhanced image.
+    @return: Enhanced image and dice score.
     """
     enhanced_image = color.gray2rgb(test_image).copy()
 
@@ -97,36 +96,6 @@ def color_enhanced(test_image, gt_mask, predicted_mask):
     intersection_nb_pixels = intersection_idx[0].shape
     enhanced_image[intersection_idx] += np.repeat(np.array([[0.3, 0.3, 0]]), intersection_nb_pixels, axis=0)
 
-    return exposure.rescale_intensity(enhanced_image, out_range=(0., 1.))
+    dice_score = 2 * len(intersection_idx[0]) / (len(gt_mask_idx[0]) + len(predicted_mask_idx[0]))
 
-
-def optimize_threshold(metric, test_image, gt_mask, prediction):
-    """
-    Optimizes threshold for binary classification.
-
-    @param metric: Evaluation metric function.
-    @param test_image: Test image.
-    @param gt_mask: Ground truth mask.
-    @param prediction: Predicted mask.
-    @return: Binary mask and optimized threshold.
-    """
-    thresholds = np.linspace(0.50, 1, 200)
-    scores = np.array([metric(test_image, gt_mask, prediction > threshold) for threshold in thresholds])
-    best_threshold = thresholds[np.argmax(scores)]
-    return prediction > best_threshold, best_threshold
-
-
-def dice_score(test_image, gt_mask, predicted_mask):
-    """
-    Computes the Dice similarity coefficient for binary segmentation masks.
-
-    @param test_image: Test image.
-    @param gt_mask: Ground truth mask.
-    @param predicted_mask: Predicted mask.
-    @return: Dice score.
-    """
-    gt_mask_idx = np.where(gt_mask == 1)
-    predicted_mask_idx = np.where(predicted_mask == 1)
-    intersection_idx = np.where((gt_mask + predicted_mask) / 2 == 1)
-    score = 2 * len(intersection_idx[0]) / (len(gt_mask_idx[0]) + len(predicted_mask_idx[0]))
-    return score
+    return exposure.rescale_intensity(enhanced_image, out_range=(0., 1.)), dice_score

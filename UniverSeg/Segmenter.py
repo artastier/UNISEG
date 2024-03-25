@@ -89,5 +89,6 @@ class Segmenter:
         nb_subdivisions = divided_img.shape[0]
         for idx in range(nb_subdivisions):
             predictions[idx] = torch.sigmoid(self.model(divided_img[idx:idx + 1], support.maps[idx:idx + 1],
-                                                        support.labels[idx:idx + 1])[0]).detach().numpy()
+                                                        support.labels[idx:idx + 1])[0]).round().clip(0,
+                                                                                                      1).detach().numpy()
         return predictions

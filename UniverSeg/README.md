@@ -84,12 +84,8 @@ batch_segmenter.save_results()
 - The results are stored in the ```Results``` folder. Inside, you can find as many folders as you supplied query images.
 
   The folders are named after the filename of the query images.
-  For each query image you will find a ```logs.txt``` file which contains the thresholds and the filenames of the
+  For each query image you will find a ```logs.txt``` file which contains the Dice score and the filenames of the
   support used in each batch.
 
-  In addition, you can see the predicted mask and the ground truth mask on the query image to
-  evaluate the performance of each support batch.
-
-# Improvements
-
-Add the Dice score in the ```logs.txt``` file.
+  In addition, you can see the predicted mask (red) and the ground truth mask (green) on the query image to
+  evaluate the performance of each support batch. If the prediction and the ground truth intersect, the color is yellow.

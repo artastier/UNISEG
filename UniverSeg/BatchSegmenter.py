@@ -60,7 +60,7 @@ class BatchSegmenter:
         :param invert_label: Flag indicating whether to invert the label or not.
         """
         self.batch_size = batch_size
-        self.segmented_batches, self.support_batches, self.test_filenames, self.thresholds = BatchSegmenter.create_and_segment_batches(
+        self.segmented_batches, self.support_batches, self.test_filenames, self.dice_scores = BatchSegmenter.create_and_segment_batches(
             map_paths, label_paths, test_path, gt_path,
             invert_label,
             batch_size,
@@ -81,11 +81,11 @@ class BatchSegmenter:
         :param invert_label: Flag indicating whether to invert the label or not.
         :param batch_size: Size of each batch.
         :param support_size: Size of the support.
-        :return: Segmented batches, support batches, test filenames, and thresholds.
+        :return: Segmented batches, support batches, test filenames, and dice scores.
         """
         segmented_batches = []
         support_batches = []
-        thresholds = []
+        dice_scores = []
         if len(map_paths) > 1 and len(label_paths) > 1 and (
                 len(map_paths) != batch_size or len(label_paths) != batch_size):
             print("\n You haven't supplied as many folders as the number of batches requested \n", file=sys.stderr)
@@ -112,10 +112,10 @@ class BatchSegmenter:
                 support = Support(map_paths[batch], label_paths[batch], support_batch, invert_label=invert_label)
             print(f"Batch n°{batch + 1} - Support size: {support.maps.shape[1]}")
             segmenter = Segmenter(test_path, support)
-            enhanced_images, thresholds_batch = compare(gt_path, test_path, segmenter)
+            enhanced_images, dice_batch = compare(gt_path, test_path, segmenter)
             segmented_batches.append(enhanced_images)
-            thresholds.append(thresholds_batch)
-        return segmented_batches, support_batches, os.listdir(test_path), thresholds
+            dice_scores.append(dice_batch)
+        return segmented_batches, support_batches, os.listdir(test_path), dice_scores
 
     def save_results(self):
         """
@@ -136,6 +136,6 @@ class BatchSegmenter:
                     file.write(f"\nSupport Batch n°{batch + 1}:\n")
                     for element in self.support_batches[batch]:
                         file.write(str(element) + '\n')
-                    threshold = self.thresholds[batch][idx]
-                    file.write(f'Threshold: {threshold} \n')
+                    dice_score = self.dice_scores[batch][idx]
+                    file.write(f'Dice score: {dice_score} \n')
                     file.close()
