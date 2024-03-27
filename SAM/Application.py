@@ -1,12 +1,13 @@
 # @author Damien GAUTIER
 # This python file corresponds to an application allowing to :
 # - Load the SAM predictor
-# - Choose the image to segment
+# - Choose the image to segment and the ground truth mask associated
 # - Select the points belonging to the mask (left click) and the points belonging to the background (right click)
 # - Predict the masks with those points prompt
 # - Save the figure with the masks predicted and the points chosen
 
-# The button to choose the image also starts the embedding which can take some time (around 20 or 25 seconds) and can
+# The button to choose the image first took the image and then the ground truth mask.
+# It also starts the embedding which can take some time (around 20 or 25 seconds) and can
 # freeze your computer.
 # Once an image has been selected, you can predict masks as much as you like. But, the prediction is always made with
 # the last points selected with the window when you click on the Button : "Select points to prompt".
@@ -71,7 +72,7 @@ class App:
         self.frame = Frame(self.window)
         # The button for choosing the image
         img_choice_button = Button(self.frame, font=("Courrier", 25), bg='white',
-                               fg='#41B77F', text="Load an image", command=self.img_choice)
+                               fg='#41B77F', text="Load \n >image \n >ground truth mask", command=self.img_choice)
         img_choice_button.pack(pady=25, fill=X)
         # The button for prompting points
         points_button = Button(self.frame, text="Select points to prompt", font=("Courrier", 25), bg='white',
@@ -95,7 +96,7 @@ class App:
         self.sam = sam_model_registry[self.model_type](checkpoint=self.sam_checkpoint)
         self.predictor = SamPredictor(self.sam)
         toc = time.perf_counter()
-        print(f'charger le predicteur a pris tant de temps : {toc - tic}s')
+        print(f'Charging the predictor took : {toc - tic}s')
 
     def predict(self):
         masks, _, _ = self.predictor.predict(
@@ -163,7 +164,7 @@ class App:
         toc = time.perf_counter()
         self.predictor.set_image(self.img_rgb)
         tac = time.perf_counter()
-        print(f"set l'image sur le predicteur a pris tant de temps : {tac - toc}s")
+        print(f"embedding the image took : {tac - toc}s")
 
     # function to display the coordinates of the points clicked on the image
     def click_event(self, event, x, y, flags, params):
