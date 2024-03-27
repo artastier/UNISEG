@@ -1,4 +1,5 @@
-# @author Arthur Astier
+# @author Arthur Astier and Damien GAUTIER
+# based on the Compare.py in MIP-PET/Compare.py
 import numpy as np
 from skimage import exposure
 from skimage import color
